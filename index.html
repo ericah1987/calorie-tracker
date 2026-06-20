@@ -84,11 +84,35 @@ body {
   cursor:pointer; transition:background .1s;
 }
 .entry:active { background:#f8f8f8; }
-.e-day { font-size:14px; color:#888; font-weight:500; min-width:68px; }
-.e-day.today { color:var(--g); font-weight:700; }
+.e-day {
+  display:flex; flex-direction:column; justify-content:center;
+  min-width:68px;
+}
+.e-dayname { font-size:14px; color:#888; font-weight:500; line-height:1.3; }
+.e-datenum { font-size:11px; color:#bbb; font-weight:400; margin-top:1px; }
+.e-day.today .e-dayname { color:var(--g); font-weight:700; }
+.e-day.today .e-datenum { color:#7aae91; }
 .e-cal { flex:1; font-size:17px; font-weight:600; color:#1c1c1e; }
-.e-emoji { margin:0 8px; display:flex; align-items:center; }
+.e-emoji { margin:0 6px 0 8px; display:flex; align-items:center; }
+.e-note { display:flex; align-items:center; margin-right:4px; }
 .e-chev { color:#c7c7cc; font-size:18px; line-height:1; }
+
+/* ── NOTE FIELD ── */
+.note-area { background:var(--g); padding:0 20px 14px; }
+.note-input {
+  width:100%; background:rgba(255,255,255,.1);
+  border:1px solid rgba(255,255,255,.18); border-radius:10px;
+  color:rgba(255,255,255,.92); font-size:14px; padding:10px 13px;
+  font-family:inherit; resize:none; outline:none; line-height:1.45;
+}
+.note-input::placeholder { color:rgba(255,255,255,.32); }
+.edit-note {
+  width:100%; background:#f5f5f5; border:none; border-radius:12px;
+  font-size:15px; padding:12px 14px; font-family:inherit;
+  resize:none; outline:none; color:#1c1c1e; line-height:1.45;
+  margin-bottom:18px;
+}
+.edit-note::placeholder { color:#bbb; }
 
 .empty {
   padding:50px 30px; text-align:center;
@@ -212,6 +236,10 @@ body {
   </div>
   <div class="mood-row" id="moodRow"></div>
 </div>
+<div class="note-area">
+  <textarea id="noteInput" class="note-input" rows="2"
+    placeholder="Add a note for today... (optional)"></textarea>
+</div>
 <div class="log-bar">
   <button class="log-btn" id="logBtn" onclick="logEntry()">Log Entry</button>
 </div>
@@ -239,6 +267,9 @@ body {
     </div>
     <div class="field-label">Mood</div>
     <div class="edit-mood-row" id="editMoodRow"></div>
+    <div class="field-label">Note</div>
+    <textarea class="edit-note" id="editNote" rows="3"
+      placeholder="What happened today? (optional)"></textarea>
     <div class="act-row">
       <button class="btn-d" onclick="deleteEntry()">Delete</button>
       <button class="btn-p" onclick="saveEdit()">Save Changes</button>
@@ -317,6 +348,7 @@ function today() { return ds(new Date()); }
 function fmt(n) { return n.toLocaleString('en-US'); }
 function dayName(str) { return pd(str).toLocaleDateString('en-US',{weekday:'short'}); }
 function shortDate(str) { return pd(str).toLocaleDateString('en-US',{month:'short',day:'numeric'}); }
+function mmdd(str) { const d=pd(str); return pad(d.getMonth()+1)+'/'+pad(d.getDate()); }
 
 function weekSun(date) {
   const d = new Date(date); d.setHours(0,0,0,0);
@@ -380,10 +412,12 @@ function pickDate(str) {
   if(e) {
     document.getElementById('calInput').value = e.calories;
     if(e.mood!=null) pickMood(e.mood); else clearMoods();
+    document.getElementById('noteInput').value = e.note || '';
     document.getElementById('logBtn').textContent = 'Update Entry';
   } else {
     document.getElementById('calInput').value = '';
     clearMoods();
+    document.getElementById('noteInput').value = '';
     document.getElementById('logBtn').textContent = 'Log Entry';
   }
   close2('dateModal');
@@ -396,9 +430,10 @@ function logEntry() {
   const cals = parseInt(raw);
   if(isNaN(cals)||cals<0||cals>99999) { toast('Invalid calorie amount'); return; }
 
+  const note = document.getElementById('noteInput').value.trim();
   const data = load();
   const isUp = !!data[selDate];
-  data[selDate] = { calories:cals, mood:selMood };
+  data[selDate] = { calories:cals, mood:selMood, note:note||null };
   save(data);
 
   document.getElementById('logBtn').textContent = 'Update Entry';
@@ -421,6 +456,7 @@ function openEdit(str) {
   document.getElementById('editMoodRow').innerHTML =
     ML.map((l,i)=>`<button class="em-btn ${i===editMoodV?'sel':''}"
       onclick="pickEditMood(${i})" title="${l}">${svg(i,40)}</button>`).join('');
+  document.getElementById('editNote').value = e.note || '';
 
   open2('editModal');
 }
@@ -436,13 +472,15 @@ function saveEdit() {
   const cals = parseInt(raw);
   if(isNaN(cals)||cals<0) { toast('Invalid calories'); return; }
 
+  const note = document.getElementById('editNote').value.trim();
   const data = load();
-  data[editDate] = { calories:cals, mood:editMoodV };
+  data[editDate] = { calories:cals, mood:editMoodV, note:note||null };
   save(data);
 
   if(editDate===selDate) {
     document.getElementById('calInput').value = cals;
     if(editMoodV!=null) pickMood(editMoodV); else clearMoods();
+    document.getElementById('noteInput').value = note;
   }
   close2('editModal');
   toast('Entry updated!');
@@ -458,6 +496,7 @@ function deleteEntry() {
   if(editDate===selDate) {
     document.getElementById('calInput').value = '';
     clearMoods();
+    document.getElementById('noteInput').value = '';
     document.getElementById('logBtn').textContent = 'Log Entry';
   }
   close2('editModal');
@@ -493,10 +532,18 @@ function render() {
 
   const wkKeys = Array.from(weeks.keys()).sort().reverse();
 
+  const NOTE_SVG = `<svg width="13" height="13" viewBox="0 0 13 13" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect x="1.5" y="1" width="10" height="11" rx="1.5" stroke="#c0c0c0" stroke-width="1.2"/>
+    <line x1="3.5" y1="4.5" x2="9.5" y2="4.5" stroke="#c0c0c0" stroke-width="1" stroke-linecap="round"/>
+    <line x1="3.5" y1="6.8" x2="9.5" y2="6.8" stroke="#c0c0c0" stroke-width="1" stroke-linecap="round"/>
+    <line x1="3.5" y1="9" x2="7" y2="9" stroke="#c0c0c0" stroke-width="1" stroke-linecap="round"/>
+  </svg>`;
+
   let html = '';
   wkKeys.forEach(wk => {
     const entries = weeks.get(wk);
     const total = entries.reduce((s,d)=>s+(data[d]?.calories||0),0);
+    const avg = entries.length ? Math.round(total/entries.length) : 0;
     let lbl;
     if(wk===curWk) lbl='This Week';
     else if(wk===lastWk) lbl='Last Week';
@@ -504,21 +551,28 @@ function render() {
 
     html += `<div class="wk-hdr">
       <span class="wk-label">${lbl}</span>
-      <span class="wk-total">${fmt(total)} calories</span>
+      <span class="wk-total">${fmt(avg)} cal/day avg</span>
     </div>`;
 
     entries.forEach(str => {
       const e = data[str];
       const isT = str===t;
-      const day = isT ? 'Today' : dayName(str);
+      const dayLbl = isT ? 'Today' : dayName(str);
+      const dateNum = mmdd(str);
       const em = (e.mood!=null)
         ? `<span class="e-emoji">${svg(e.mood,28)}</span>`
-        : `<span class="e-emoji" style="width:28px"></span>`;
+        : `<span class="e-emoji" style="width:28px;margin:0 6px 0 8px"></span>`;
+      const noteIcon = e.note
+        ? `<span class="e-note">${NOTE_SVG}</span>`
+        : '';
 
       html += `<div class="entry" onclick="openEdit('${str}')">
-        <span class="e-day ${isT?'today':''}">${day}</span>
+        <span class="e-day ${isT?'today':''}">
+          <span class="e-dayname">${dayLbl}</span>
+          <span class="e-datenum">${dateNum}</span>
+        </span>
         <span class="e-cal">${fmt(e.calories)} calories</span>
-        ${em}<span class="e-chev">›</span>
+        ${em}${noteIcon}<span class="e-chev">›</span>
       </div>`;
     });
   });
@@ -555,6 +609,7 @@ const td = load()[today()];
 if(td) {
   document.getElementById('calInput').value = td.calories;
   if(td.mood!=null) pickMood(td.mood);
+  document.getElementById('noteInput').value = td.note || '';
   document.getElementById('logBtn').textContent = 'Update Entry';
 }
 
