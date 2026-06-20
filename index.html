@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Daily Calories</title>
+<style>
+:root { --g: #2d4a3a; }
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html,body { height:100%; overscroll-behavior:none; }
+body {
+  font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;
+  background:#f0f0f0; max-width:430px; margin:0 auto;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ── HEADER ── */
+.hdr {
+  background:var(--g);
+  padding: calc(16px + env(safe-area-inset-top)) 20px 0;
+}
+.hdr-top {
+  display:flex; align-items:center; justify-content:space-between;
+  margin-bottom:4px;
+}
+.hdr-title { color:#fff; font-size:22px; font-weight:700; letter-spacing:-0.3px; }
+.cal-wrap { background:#fff; border-radius:10px; overflow:hidden; min-width:148px; }
+.cal-input {
+  width:100%; border:none; padding:9px 14px;
+  font-size:20px; font-weight:600; text-align:right;
+  outline:none; color:#222; background:transparent; font-family:inherit;
+}
+.cal-input::placeholder { color:#ccc; font-weight:400; }
+.cal-input::-webkit-outer-spin-button,
+.cal-input::-webkit-inner-spin-button { -webkit-appearance:none; }
+.cal-input[type=number] { -moz-appearance:textfield; }
+
+.date-row { text-align:right; padding:3px 0 10px; }
+.date-btn {
+  background:none; border:none; color:rgba(255,255,255,.65);
+  font-size:11px; font-weight:600; letter-spacing:1.5px;
+  text-transform:uppercase; cursor:pointer; font-family:inherit; padding:4px 0;
+}
+
+.mood-row {
+  display:flex; justify-content:center; align-items:center;
+  gap:10px; padding:12px 0 16px;
+}
+.mood-btn {
+  background:none; border:none; cursor:pointer; padding:4px;
+  border-radius:50%; opacity:.55;
+  transition:transform .2s, opacity .2s, box-shadow .2s;
+  display:flex; align-items:center;
+}
+.mood-btn.sel {
+  opacity:1; transform:scale(1.2);
+  box-shadow:0 0 0 3px rgba(255,255,255,.5);
+}
+
+.log-bar { background:var(--g); padding:0 20px 18px; }
+.log-btn {
+  width:100%; background:rgba(255,255,255,.12);
+  border:1.5px solid rgba(255,255,255,.28);
+  border-radius:12px; color:#fff; font-size:15px; font-weight:600;
+  padding:13px; cursor:pointer; font-family:inherit; transition:background .15s;
+}
+.log-btn:active { background:rgba(255,255,255,.22); }
+
+/* ── HISTORY ── */
+.history { padding-bottom:calc(40px + env(safe-area-inset-bottom)); }
+
+.wk-hdr {
+  background:var(--g); color:#fff; padding:9px 20px;
+  display:flex; justify-content:space-between; align-items:center;
+}
+.wk-label { font-size:13px; font-weight:700; letter-spacing:.2px; }
+.wk-total { font-size:14px; font-weight:700; }
+
+.entry {
+  background:#fff; border-bottom:1px solid #f0f0f0;
+  padding:13px 20px; display:flex; align-items:center;
+  cursor:pointer; transition:background .1s;
+}
+.entry:active { background:#f8f8f8; }
+.e-day { font-size:14px; color:#888; font-weight:500; min-width:68px; }
+.e-day.today { color:var(--g); font-weight:700; }
+.e-cal { flex:1; font-size:17px; font-weight:600; color:#1c1c1e; }
+.e-emoji { margin:0 8px; display:flex; align-items:center; }
+.e-chev { color:#c7c7cc; font-size:18px; line-height:1; }
+
+.empty {
+  padding:50px 30px; text-align:center;
+}
+.empty-icon { font-size:48px; margin-bottom:12px; }
+.empty-txt { color:#aaa; font-size:15px; line-height:1.5; }
+
+/* ── MODALS ── */
+.overlay {
+  position:fixed; inset:0; background:rgba(0,0,0,.45);
+  z-index:50; opacity:0; pointer-events:none;
+  transition:opacity .25s; display:flex;
+  align-items:flex-end; justify-content:center;
+}
+.overlay.open { opacity:1; pointer-events:all; }
+
+.sheet {
+  background:#fff; border-radius:20px 20px 0 0;
+  padding:16px 20px calc(24px + env(safe-area-inset-bottom));
+  width:100%; max-width:430px;
+  transform:translateY(100%);
+  transition:transform .32s cubic-bezier(.32,.72,0,1);
+}
+.overlay.open .sheet { transform:translateY(0); }
+
+.sh-handle {
+  width:36px; height:4px; background:#e0e0e0;
+  border-radius:2px; margin:0 auto 18px;
+}
+.sh-title {
+  font-size:17px; font-weight:700; color:#1c1c1e;
+  text-align:center; margin-bottom:18px;
+}
+
+/* Date picker */
+.date-list { overflow-y:auto; max-height:55vh; margin:0 -4px; }
+.d-item {
+  padding:14px 16px; display:flex; justify-content:space-between;
+  align-items:center; cursor:pointer; border-radius:10px;
+  transition:background .1s;
+}
+.d-item:active { background:#f5f5f5; }
+.d-item.cur { background:#f0f7f3; }
+.d-label { font-size:16px; font-weight:500; color:#1c1c1e; }
+.d-item.cur .d-label { color:var(--g); font-weight:700; }
+.d-sub { font-size:13px; color:#aaa; }
+
+/* Edit sheet */
+.field-label {
+  font-size:11px; font-weight:600; color:#aaa;
+  letter-spacing:.6px; text-transform:uppercase;
+  margin-bottom:8px;
+}
+.edit-cal-wrap {
+  background:#f5f5f5; border-radius:12px;
+  display:flex; align-items:center; margin-bottom:18px;
+}
+.edit-cal {
+  background:none; border:none; font-size:32px; font-weight:700;
+  color:#1c1c1e; padding:14px 20px; text-align:center;
+  outline:none; width:100%; font-family:inherit;
+}
+.edit-cal::-webkit-outer-spin-button,
+.edit-cal::-webkit-inner-spin-button { -webkit-appearance:none; }
+.edit-cal[type=number] { -moz-appearance:textfield; }
+
+.edit-mood-row {
+  display:flex; justify-content:center;
+  gap:12px; margin-bottom:22px;
+}
+.em-btn {
+  background:none; border:none; cursor:pointer; padding:4px;
+  border-radius:50%; opacity:.5; transition:all .15s; display:flex;
+}
+.em-btn.sel { opacity:1; transform:scale(1.15); box-shadow:0 0 0 2.5px var(--g); }
+
+.act-row { display:flex; gap:10px; margin-bottom:10px; }
+.btn-p {
+  flex:2; background:var(--g); color:#fff; border:none;
+  border-radius:12px; padding:15px; font-size:16px; font-weight:700;
+  cursor:pointer; font-family:inherit;
+}
+.btn-p:active { opacity:.85; }
+.btn-d {
+  flex:1; background:#fff0f0; color:#e53935; border:none;
+  border-radius:12px; padding:15px; font-size:16px; font-weight:700;
+  cursor:pointer; font-family:inherit;
+}
+.btn-d:active { background:#ffe0e0; }
+.btn-s {
+  width:100%; background:#f0f0f0; color:#555; border:none;
+  border-radius:12px; padding:14px; font-size:16px; font-weight:600;
+  cursor:pointer; font-family:inherit;
+}
+.btn-s:active { background:#e8e8e8; }
+
+/* Toast */
+.toast {
+  position:fixed; bottom:calc(28px + env(safe-area-inset-bottom)); left:50%;
+  transform:translateX(-50%) translateY(80px);
+  background:rgba(28,28,28,.92); color:#fff; padding:10px 22px;
+  border-radius:20px; font-size:14px; font-weight:600; z-index:999;
+  transition:transform .28s ease; white-space:nowrap;
+  backdrop-filter:blur(10px);
+}
+.toast.show { transform:translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-top">
+    <span class="hdr-title">Daily Calories</span>
+    <div class="cal-wrap">
+      <input type="number" id="calInput" class="cal-input"
+             inputmode="numeric" placeholder="0" min="0" max="99999">
+    </div>
+  </div>
+  <div class="date-row">
+    <button class="date-btn" id="dateBtn" onclick="openDateModal()">TODAY</button>
+  </div>
+  <div class="mood-row" id="moodRow"></div>
+</div>
+<div class="log-bar">
+  <button class="log-btn" id="logBtn" onclick="logEntry()">Log Entry</button>
+</div>
+
+<div class="history" id="history"></div>
+
+<!-- Date Modal -->
+<div class="overlay" id="dateModal" onclick="bgClose(event,'dateModal')">
+  <div class="sheet">
+    <div class="sh-handle"></div>
+    <div class="sh-title">Select Date</div>
+    <div class="date-list" id="dateList"></div>
+    <button class="btn-s" style="margin-top:12px" onclick="close2('dateModal')">Cancel</button>
+  </div>
+</div>
+
+<!-- Edit Modal -->
+<div class="overlay" id="editModal" onclick="bgClose(event,'editModal')">
+  <div class="sheet">
+    <div class="sh-handle"></div>
+    <div class="sh-title" id="editTitle">Edit Entry</div>
+    <div class="field-label">Calories</div>
+    <div class="edit-cal-wrap">
+      <input type="number" class="edit-cal" id="editCal" inputmode="numeric">
+    </div>
+    <div class="field-label">Mood</div>
+    <div class="edit-mood-row" id="editMoodRow"></div>
+    <div class="act-row">
+      <button class="btn-d" onclick="deleteEntry()">Delete</button>
+      <button class="btn-p" onclick="saveEdit()">Save Changes</button>
+    </div>
+    <button class="btn-s" onclick="close2('editModal')">Cancel</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── EMOJI SVGs ──
+const MC = ['#4CAF50','#8BC34A','#FFCA28','#FF9800','#F44336'];
+const ML = ['Great','Good','Okay','Meh','Bad'];
+
+function svg(idx, sz) {
+  const c = MC[idx], s = sz, cx = s/2;
+  const er = s*.07, ew = s*.048;
+  const elx = s*.33, erx = s*.67, ey = s*.42;
+  let br='', mo='';
+  switch(idx) {
+    case 0:
+      mo=`<path d="M${s*.28} ${s*.54} Q${cx} ${s*.82} ${s*.72} ${s*.54}"
+               fill="none" stroke="#222" stroke-width="${ew}" stroke-linecap="round"/>
+          <circle cx="${s*.23}" cy="${s*.58}" r="${s*.1}" fill="rgba(255,80,60,.2)"/>
+          <circle cx="${s*.77}" cy="${s*.58}" r="${s*.1}" fill="rgba(255,80,60,.2)"/>`;
+      break;
+    case 1:
+      mo=`<path d="M${s*.3} ${s*.55} Q${cx} ${s*.76} ${s*.7} ${s*.55}"
+               fill="none" stroke="#222" stroke-width="${ew}" stroke-linecap="round"/>`;
+      break;
+    case 2:
+      mo=`<line x1="${s*.3}" y1="${s*.62}" x2="${s*.7}" y2="${s*.62}"
+               stroke="#222" stroke-width="${ew}" stroke-linecap="round"/>`;
+      break;
+    case 3:
+      mo=`<path d="M${s*.3} ${s*.68} Q${cx} ${s*.5} ${s*.7} ${s*.68}"
+               fill="none" stroke="#222" stroke-width="${ew}" stroke-linecap="round"/>`;
+      break;
+    case 4:
+      br=`<line x1="${s*.22}" y1="${s*.3}" x2="${s*.44}" y2="${s*.42}"
+               stroke="#222" stroke-width="${ew}" stroke-linecap="round"/>
+          <line x1="${s*.78}" y1="${s*.3}" x2="${s*.56}" y2="${s*.42}"
+               stroke="#222" stroke-width="${ew}" stroke-linecap="round"/>`;
+      mo=`<path d="M${s*.3} ${s*.7} Q${cx} ${s*.52} ${s*.7} ${s*.7}"
+               fill="none" stroke="#222" stroke-width="${ew}" stroke-linecap="round"/>`;
+      break;
+  }
+  return `<svg width="${s}" height="${s}" viewBox="0 0 ${s} ${s}" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="${cx}" cy="${cx}" r="${cx}" fill="${c}"/>
+    ${br}
+    <circle cx="${elx}" cy="${ey}" r="${er}" fill="#222"/>
+    <circle cx="${erx}" cy="${ey}" r="${er}" fill="#222"/>
+    ${mo}
+  </svg>`;
+}
+
+// ── STATE ──
+const KEY = 'cals_v1';
+let selDate = ds(new Date());
+let selMood = null;
+let editDate = null;
+let editMoodV = null;
+
+// ── STORAGE ──
+function load() { try { return JSON.parse(localStorage.getItem(KEY)||'{}'); } catch { return {}; } }
+function save(d) { localStorage.setItem(KEY, JSON.stringify(d)); }
+
+// ── DATE UTILS ──
+function ds(date) {
+  return date.getFullYear()+'-'+pad(date.getMonth()+1)+'-'+pad(date.getDate());
+}
+function pad(n) { return String(n).padStart(2,'0'); }
+function pd(str) { const [y,m,d]=str.split('-').map(Number); return new Date(y,m-1,d); }
+function today() { return ds(new Date()); }
+function fmt(n) { return n.toLocaleString('en-US'); }
+function dayName(str) { return pd(str).toLocaleDateString('en-US',{weekday:'short'}); }
+function shortDate(str) { return pd(str).toLocaleDateString('en-US',{month:'short',day:'numeric'}); }
+
+function weekSun(date) {
+  const d = new Date(date); d.setHours(0,0,0,0);
+  d.setDate(d.getDate() - d.getDay());
+  return d;
+}
+
+// ── MOOD ROW INIT ──
+function initMoods() {
+  document.getElementById('moodRow').innerHTML =
+    ML.map((l,i)=>`<button class="mood-btn" id="m${i}" onclick="pickMood(${i})" title="${l}">${svg(i,46)}</button>`).join('');
+}
+
+function pickMood(i) {
+  selMood = i;
+  for(let j=0;j<5;j++) document.getElementById('m'+j)?.classList.toggle('sel',j===i);
+}
+
+function clearMoods() {
+  selMood = null;
+  for(let j=0;j<5;j++) document.getElementById('m'+j)?.classList.remove('sel');
+}
+
+// ── DATE MODAL ──
+function openDateModal() {
+  const data = load();
+  const t = new Date();
+  let html = '';
+  for(let i=0;i<30;i++) {
+    const d = new Date(t); d.setDate(t.getDate()-i);
+    const str = ds(d);
+    const lbl = i===0 ? 'Today' : i===1 ? 'Yesterday'
+      : d.toLocaleDateString('en-US',{weekday:'long',month:'short',day:'numeric'});
+    const e = data[str];
+    const sub = e ? fmt(e.calories)+' cal' : '';
+    const cur = str===selDate ? 'cur' : '';
+    html += `<div class="d-item ${cur}" onclick="pickDate('${str}')">
+      <span class="d-label">${lbl}</span>
+      <span class="d-sub">${sub}</span>
+    </div>`;
+  }
+  document.getElementById('dateList').innerHTML = html;
+  open2('dateModal');
+}
+
+function pickDate(str) {
+  selDate = str;
+  // Update button label
+  const t = today();
+  const yd = new Date(); yd.setDate(yd.getDate()-1);
+  const ys = ds(yd);
+  let lbl;
+  if(str===t) lbl='TODAY';
+  else if(str===ys) lbl='YESTERDAY';
+  else lbl = pd(str).toLocaleDateString('en-US',{month:'short',day:'numeric'}).toUpperCase();
+  document.getElementById('dateBtn').textContent = lbl;
+
+  // Load entry
+  const data = load();
+  const e = data[str];
+  if(e) {
+    document.getElementById('calInput').value = e.calories;
+    if(e.mood!=null) pickMood(e.mood); else clearMoods();
+    document.getElementById('logBtn').textContent = 'Update Entry';
+  } else {
+    document.getElementById('calInput').value = '';
+    clearMoods();
+    document.getElementById('logBtn').textContent = 'Log Entry';
+  }
+  close2('dateModal');
+}
+
+// ── LOG ENTRY ──
+function logEntry() {
+  const raw = document.getElementById('calInput').value.trim();
+  if(!raw) { toast('Enter your calories first'); return; }
+  const cals = parseInt(raw);
+  if(isNaN(cals)||cals<0||cals>99999) { toast('Invalid calorie amount'); return; }
+
+  const data = load();
+  const isUp = !!data[selDate];
+  data[selDate] = { calories:cals, mood:selMood };
+  save(data);
+
+  document.getElementById('logBtn').textContent = 'Update Entry';
+  toast(isUp ? 'Entry updated!' : 'Entry saved!');
+  render();
+}
+
+// ── EDIT MODAL ──
+function openEdit(str) {
+  const data = load();
+  const e = data[str];
+  if(!e) return;
+  editDate = str;
+  editMoodV = e.mood ?? null;
+
+  document.getElementById('editTitle').textContent =
+    str===today() ? 'Edit Today' : 'Edit — '+shortDate(str);
+  document.getElementById('editCal').value = e.calories;
+
+  document.getElementById('editMoodRow').innerHTML =
+    ML.map((l,i)=>`<button class="em-btn ${i===editMoodV?'sel':''}"
+      onclick="pickEditMood(${i})" title="${l}">${svg(i,40)}</button>`).join('');
+
+  open2('editModal');
+}
+
+function pickEditMood(i) {
+  editMoodV = i;
+  document.querySelectorAll('#editMoodRow .em-btn').forEach((b,j)=>b.classList.toggle('sel',j===i));
+}
+
+function saveEdit() {
+  const raw = document.getElementById('editCal').value.trim();
+  if(!raw) { toast('Enter calories'); return; }
+  const cals = parseInt(raw);
+  if(isNaN(cals)||cals<0) { toast('Invalid calories'); return; }
+
+  const data = load();
+  data[editDate] = { calories:cals, mood:editMoodV };
+  save(data);
+
+  if(editDate===selDate) {
+    document.getElementById('calInput').value = cals;
+    if(editMoodV!=null) pickMood(editMoodV); else clearMoods();
+  }
+  close2('editModal');
+  toast('Entry updated!');
+  render();
+}
+
+function deleteEntry() {
+  if(!editDate) return;
+  const data = load();
+  delete data[editDate];
+  save(data);
+
+  if(editDate===selDate) {
+    document.getElementById('calInput').value = '';
+    clearMoods();
+    document.getElementById('logBtn').textContent = 'Log Entry';
+  }
+  close2('editModal');
+  toast('Entry deleted');
+  render();
+}
+
+// ── RENDER HISTORY ──
+function render() {
+  const data = load();
+  const t = today();
+  const dates = Object.keys(data).sort().reverse();
+
+  if(!dates.length) {
+    document.getElementById('history').innerHTML =
+      `<div class="empty"><div class="empty-icon">🥗</div>
+       <div class="empty-txt">No entries yet.<br>Log your first day above!</div></div>`;
+    return;
+  }
+
+  // Group by Sun-Sat week
+  const weeks = new Map();
+  dates.forEach(str => {
+    const key = ds(weekSun(pd(str)));
+    if(!weeks.has(key)) weeks.set(key, []);
+    weeks.get(key).push(str);
+  });
+
+  const now = new Date(); now.setHours(0,0,0,0);
+  const curWk = ds(weekSun(now));
+  const lwDate = new Date(now); lwDate.setDate(now.getDate()-7);
+  const lastWk = ds(weekSun(lwDate));
+
+  const wkKeys = Array.from(weeks.keys()).sort().reverse();
+
+  let html = '';
+  wkKeys.forEach(wk => {
+    const entries = weeks.get(wk);
+    const total = entries.reduce((s,d)=>s+(data[d]?.calories||0),0);
+    let lbl;
+    if(wk===curWk) lbl='This Week';
+    else if(wk===lastWk) lbl='Last Week';
+    else lbl='Week of '+pd(wk).toLocaleDateString('en-US',{month:'short',day:'numeric'});
+
+    html += `<div class="wk-hdr">
+      <span class="wk-label">${lbl}</span>
+      <span class="wk-total">${fmt(total)} calories</span>
+    </div>`;
+
+    entries.forEach(str => {
+      const e = data[str];
+      const isT = str===t;
+      const day = isT ? 'Today' : dayName(str);
+      const em = (e.mood!=null)
+        ? `<span class="e-emoji">${svg(e.mood,28)}</span>`
+        : `<span class="e-emoji" style="width:28px"></span>`;
+
+      html += `<div class="entry" onclick="openEdit('${str}')">
+        <span class="e-day ${isT?'today':''}">${day}</span>
+        <span class="e-cal">${fmt(e.calories)} calories</span>
+        ${em}<span class="e-chev">›</span>
+      </div>`;
+    });
+  });
+
+  document.getElementById('history').innerHTML = html;
+}
+
+// ── MODAL HELPERS ──
+function open2(id) {
+  document.getElementById(id).classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function close2(id) {
+  document.getElementById(id).classList.remove('open');
+  document.body.style.overflow='';
+}
+function bgClose(e,id) {
+  if(e.target===document.getElementById(id)) close2(id);
+}
+
+// ── TOAST ──
+let tt;
+function toast(msg) {
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.classList.add('show');
+  clearTimeout(tt); tt=setTimeout(()=>el.classList.remove('show'),2600);
+}
+
+// ── STARTUP ──
+initMoods();
+render();
+
+const td = load()[today()];
+if(td) {
+  document.getElementById('calInput').value = td.calories;
+  if(td.mood!=null) pickMood(td.mood);
+  document.getElementById('logBtn').textContent = 'Update Entry';
+}
+
+document.getElementById('calInput').addEventListener('keydown', e => {
+  if(e.key==='Enter') logEntry();
+});
+</script>
+</body>
+</html>
