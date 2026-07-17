@@ -25,7 +25,12 @@ body {
   display:flex; align-items:center; justify-content:space-between;
   margin-bottom:4px;
 }
+.hdr-left { display:flex; flex-direction:column; gap:3px; }
 .hdr-title { color:#fff; font-size:22px; font-weight:700; letter-spacing:-0.3px; }
+.streak-badge {
+  color:rgba(255,255,255,.75); font-size:12px; font-weight:600;
+  letter-spacing:.2px; min-height:16px;
+}
 .cal-wrap { background:#fff; border-radius:10px; overflow:hidden; min-width:148px; }
 .cal-input {
   width:100%; border:none; padding:9px 14px;
@@ -68,7 +73,38 @@ body {
 }
 .log-btn:active { background:rgba(255,255,255,.22); }
 
-/* ── HISTORY ── */
+/* ── VIEW TABS ── */
+.view-tabs {
+  background:#fff; padding:10px 16px 10px;
+  display:flex; gap:8px; border-bottom:1px solid #f0f0f0;
+  position:sticky; top:0; z-index:10;
+}
+.view-tab {
+  flex:1; background:#f0f0f0; border:none; border-radius:10px;
+  padding:9px 4px; font-size:13px; font-weight:600; color:#777;
+  cursor:pointer; font-family:inherit; transition:all .18s;
+}
+.view-tab.active { background:var(--g); color:#fff; }
+.view-tab:active:not(.active) { background:#e2e2e2; }
+
+/* ── NOTE FIELD ── */
+.note-area { background:var(--g); padding:0 20px 14px; }
+.note-input {
+  width:100%; background:rgba(255,255,255,.1);
+  border:1px solid rgba(255,255,255,.18); border-radius:10px;
+  color:rgba(255,255,255,.92); font-size:14px; padding:10px 13px;
+  font-family:inherit; resize:none; outline:none; line-height:1.45;
+}
+.note-input::placeholder { color:rgba(255,255,255,.32); }
+.edit-note {
+  width:100%; background:#f5f5f5; border:none; border-radius:12px;
+  font-size:15px; padding:12px 14px; font-family:inherit;
+  resize:none; outline:none; color:#1c1c1e; line-height:1.45;
+  margin-bottom:18px;
+}
+.edit-note::placeholder { color:#bbb; }
+
+/* ── LIST VIEW ── */
 .history { padding-bottom:calc(40px + env(safe-area-inset-bottom)); }
 
 .wk-hdr {
@@ -97,28 +133,86 @@ body {
 .e-note { display:flex; align-items:center; margin-right:4px; }
 .e-chev { color:#c7c7cc; font-size:18px; line-height:1; }
 
-/* ── NOTE FIELD ── */
-.note-area { background:var(--g); padding:0 20px 14px; }
-.note-input {
-  width:100%; background:rgba(255,255,255,.1);
-  border:1px solid rgba(255,255,255,.18); border-radius:10px;
-  color:rgba(255,255,255,.92); font-size:14px; padding:10px 13px;
-  font-family:inherit; resize:none; outline:none; line-height:1.45;
-}
-.note-input::placeholder { color:rgba(255,255,255,.32); }
-.edit-note {
-  width:100%; background:#f5f5f5; border:none; border-radius:12px;
-  font-size:15px; padding:12px 14px; font-family:inherit;
-  resize:none; outline:none; color:#1c1c1e; line-height:1.45;
-  margin-bottom:18px;
-}
-.edit-note::placeholder { color:#bbb; }
-
 .empty {
   padding:50px 30px; text-align:center;
 }
 .empty-icon { font-size:48px; margin-bottom:12px; }
 .empty-txt { color:#aaa; font-size:15px; line-height:1.5; }
+
+/* ── CALENDAR VIEW ── */
+.cal-view { padding-bottom:calc(40px + env(safe-area-inset-bottom)); background:#f0f0f0; }
+.cal-nav {
+  background:#fff; display:flex; align-items:center; justify-content:space-between;
+  padding:14px 16px 12px; border-bottom:1px solid #f0f0f0;
+}
+.cal-month-label { font-size:18px; font-weight:700; color:#1c1c1e; }
+.cal-arrow {
+  background:#f0f0f0; border:none; width:34px; height:34px; border-radius:50%;
+  font-size:16px; color:var(--g); cursor:pointer; display:flex;
+  align-items:center; justify-content:center; font-family:inherit; font-weight:700;
+}
+.cal-arrow:active { background:#e2e2e2; }
+.cal-streak-row {
+  background:#fff; padding:10px 20px; border-bottom:1px solid #f0f0f0;
+  display:flex; align-items:center; gap:6px;
+}
+.cal-streak-txt { font-size:13px; color:#555; font-weight:600; }
+.cal-body { padding:12px 10px 0; }
+.cal-dow {
+  display:grid; grid-template-columns:repeat(7,1fr);
+  text-align:center; margin-bottom:6px;
+}
+.cal-dow-cell { font-size:11px; font-weight:600; color:#aaa; padding:4px 0; }
+.cal-cells {
+  display:grid; grid-template-columns:repeat(7,1fr); gap:6px 2px;
+}
+.cal-cell {
+  display:flex; flex-direction:column; align-items:center;
+  padding:3px 1px; cursor:pointer;
+}
+.cal-cell.c-empty { cursor:default; }
+.c-circle-wrap {
+  width:42px; height:42px; display:flex; align-items:center; justify-content:center;
+}
+.c-empty-circle {
+  width:38px; height:38px; border-radius:50%; background:#e8e8e8;
+  display:flex; align-items:center; justify-content:center;
+}
+.c-plus { font-size:18px; color:#c0c0c0; font-weight:300; line-height:1; }
+.c-num {
+  font-size:11px; color:#999; margin-top:2px; font-weight:500; line-height:1;
+}
+.cal-cell.c-today .c-num { color:var(--g); font-weight:700; }
+.cal-cell.c-other-month { opacity:.35; cursor:default; }
+.cal-cell.c-future { opacity:.4; cursor:default; }
+.c-today-ring {
+  outline:2.5px solid var(--g); outline-offset:2px; border-radius:50%;
+}
+
+/* ── WEEKLY AVG VIEW ── */
+.weekly-view { padding-bottom:calc(40px + env(safe-area-inset-bottom)); }
+.wk-avg-header {
+  background:var(--g); color:#fff; padding:12px 20px;
+  display:flex; justify-content:space-between; align-items:center;
+}
+.wk-avg-header-label { font-size:13px; font-weight:700; }
+.wk-avg-header-sub { font-size:12px; color:rgba(255,255,255,.6); }
+.wk-avg-card {
+  background:#fff; border-bottom:1px solid #f0f0f0; padding:16px 20px;
+  cursor:default;
+}
+.wk-avg-top {
+  display:flex; justify-content:space-between; align-items:baseline;
+  margin-bottom:5px;
+}
+.wk-avg-range { font-size:13px; color:#888; font-weight:500; }
+.wk-avg-num { font-size:20px; font-weight:700; color:#1c1c1e; }
+.wk-avg-unit { font-size:13px; color:#aaa; font-weight:500; margin-left:2px; }
+.wk-bar-bg { background:#f0f0f0; border-radius:6px; height:10px; margin:8px 0 10px; overflow:hidden; }
+.wk-bar-fill { height:10px; border-radius:6px; transition:width .4s ease; }
+.wk-avg-meta { display:flex; justify-content:space-between; align-items:center; }
+.wk-avg-days { font-size:12px; color:#aaa; }
+.wk-avg-moods { display:flex; gap:3px; align-items:center; }
 
 /* ── MODALS ── */
 .overlay {
@@ -258,7 +352,10 @@ body {
 
 <div class="hdr">
   <div class="hdr-top">
-    <span class="hdr-title">Daily Calories</span>
+    <div class="hdr-left">
+      <span class="hdr-title">Daily Calories</span>
+      <span class="streak-badge" id="streakBadge"></span>
+    </div>
     <div class="cal-wrap">
       <input type="number" id="calInput" class="cal-input"
              inputmode="numeric" placeholder="0" min="0" max="99999">
@@ -277,7 +374,14 @@ body {
   <button class="log-btn" id="logBtn" onclick="logEntry()">Log Entry</button>
 </div>
 
-<div class="history" id="history"></div>
+<!-- View tabs -->
+<div class="view-tabs">
+  <button class="view-tab active" id="tab-list" onclick="switchView('list')">List</button>
+  <button class="view-tab" id="tab-cal" onclick="switchView('cal')">Calendar</button>
+  <button class="view-tab" id="tab-weekly" onclick="switchView('weekly')">Weekly</button>
+</div>
+
+<div id="mainContent"></div>
 
 <!-- Date Modal -->
 <div class="overlay" id="dateModal" onclick="bgClose(event,'dateModal')">
@@ -312,7 +416,7 @@ body {
 </div>
 
 <!-- Backup & Restore trigger -->
-<div class="bk-trigger-row">
+<div class="bk-trigger-row" id="bkTriggerRow">
   <button class="bk-trigger" onclick="openBackup()">
     <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
       <circle cx="7" cy="7" r="6" stroke="#bbb" stroke-width="1.3"/>
@@ -407,6 +511,9 @@ let selDate = ds(new Date());
 let selMood = null;
 let editDate = null;
 let editMoodV = null;
+let currentView = 'list';
+let calYear = new Date().getFullYear();
+let calMonth = new Date().getMonth();
 
 // ── STORAGE ──
 function load() { try { return JSON.parse(localStorage.getItem(KEY)||'{}'); } catch { return {}; } }
@@ -430,6 +537,30 @@ function weekSun(date) {
   return d;
 }
 
+// ── STREAK ──
+function calcStreak() {
+  const data = load();
+  const todayStr = today();
+  let streak = 0;
+  const start = new Date(); start.setHours(0,0,0,0);
+  if (!data[todayStr]) start.setDate(start.getDate()-1);
+  const d = new Date(start);
+  while(true) {
+    if(data[ds(d)]) { streak++; d.setDate(d.getDate()-1); }
+    else break;
+  }
+  return streak;
+}
+
+function updateStreak() {
+  const s = calcStreak();
+  const el = document.getElementById('streakBadge');
+  if(!el) return;
+  if(s >= 2) el.textContent = `🔥 ${s}-day streak`;
+  else if(s === 1) el.textContent = `🔥 1-day streak`;
+  else el.textContent = '';
+}
+
 // ── MOOD ROW INIT ──
 function initMoods() {
   document.getElementById('moodRow').innerHTML =
@@ -444,6 +575,17 @@ function pickMood(i) {
 function clearMoods() {
   selMood = null;
   for(let j=0;j<5;j++) document.getElementById('m'+j)?.classList.remove('sel');
+}
+
+// ── VIEW SWITCHER ──
+function switchView(v) {
+  currentView = v;
+  ['list','cal','weekly'].forEach(id => {
+    document.getElementById('tab-'+id).classList.toggle('active', id===v);
+  });
+  // Show backup trigger only in list view
+  document.getElementById('bkTriggerRow').style.display = v==='list' ? '' : 'none';
+  render();
 }
 
 // ── DATE MODAL ──
@@ -470,7 +612,6 @@ function openDateModal() {
 
 function pickDate(str) {
   selDate = str;
-  // Update button label
   const t = today();
   const yd = new Date(); yd.setDate(yd.getDate()-1);
   const ys = ds(yd);
@@ -480,7 +621,6 @@ function pickDate(str) {
   else lbl = pd(str).toLocaleDateString('en-US',{month:'short',day:'numeric'}).toUpperCase();
   document.getElementById('dateBtn').textContent = lbl;
 
-  // Load entry
   const data = load();
   const e = data[str];
   if(e) {
@@ -581,20 +721,27 @@ function deleteEntry() {
   syncToGist(load());
 }
 
-// ── RENDER HISTORY ──
+// ── RENDER ROUTER ──
 function render() {
+  updateStreak();
+  if(currentView==='list') renderList();
+  else if(currentView==='cal') renderCal();
+  else renderWeekly();
+}
+
+// ── LIST VIEW ──
+function renderList() {
   const data = load();
   const t = today();
   const dates = Object.keys(data).sort().reverse();
 
   if(!dates.length) {
-    document.getElementById('history').innerHTML =
-      `<div class="empty"><div class="empty-icon">🥗</div>
-       <div class="empty-txt">No entries yet.<br>Log your first day above!</div></div>`;
+    document.getElementById('mainContent').innerHTML =
+      `<div class="history"><div class="empty"><div class="empty-icon">🥗</div>
+       <div class="empty-txt">No entries yet.<br>Log your first day above!</div></div></div>`;
     return;
   }
 
-  // Group by Sun-Sat week
   const weeks = new Map();
   dates.forEach(str => {
     const key = ds(weekSun(pd(str)));
@@ -606,17 +753,16 @@ function render() {
   const curWk = ds(weekSun(now));
   const lwDate = new Date(now); lwDate.setDate(now.getDate()-7);
   const lastWk = ds(weekSun(lwDate));
-
   const wkKeys = Array.from(weeks.keys()).sort().reverse();
 
-  const NOTE_SVG = `<svg width="13" height="13" viewBox="0 0 13 13" fill="none" xmlns="http://www.w3.org/2000/svg">
+  const NOTE_SVG = `<svg width="13" height="13" viewBox="0 0 13 13" fill="none">
     <rect x="1.5" y="1" width="10" height="11" rx="1.5" stroke="#c0c0c0" stroke-width="1.2"/>
     <line x1="3.5" y1="4.5" x2="9.5" y2="4.5" stroke="#c0c0c0" stroke-width="1" stroke-linecap="round"/>
     <line x1="3.5" y1="6.8" x2="9.5" y2="6.8" stroke="#c0c0c0" stroke-width="1" stroke-linecap="round"/>
     <line x1="3.5" y1="9" x2="7" y2="9" stroke="#c0c0c0" stroke-width="1" stroke-linecap="round"/>
   </svg>`;
 
-  let html = '';
+  let html = '<div class="history">';
   wkKeys.forEach(wk => {
     const entries = weeks.get(wk);
     const total = entries.reduce((s,d)=>s+(data[d]?.calories||0),0);
@@ -653,8 +799,198 @@ function render() {
       </div>`;
     });
   });
+  html += '</div>';
+  document.getElementById('mainContent').innerHTML = html;
+}
 
-  document.getElementById('history').innerHTML = html;
+// ── CALENDAR VIEW ──
+function renderCal() {
+  const data = load();
+  const todayStr = today();
+  const now = new Date();
+  const streak = calcStreak();
+
+  const monthLabel = new Date(calYear, calMonth, 1)
+    .toLocaleDateString('en-US',{month:'long',year:'numeric'});
+
+  const firstDay = new Date(calYear, calMonth, 1);
+  const lastDay = new Date(calYear, calMonth+1, 0);
+  const startDow = firstDay.getDay();
+  const daysInMonth = lastDay.getDate();
+
+  const daysInPrev = new Date(calYear, calMonth, 0).getDate();
+  const totalCells = Math.ceil((startDow + daysInMonth) / 7) * 7;
+
+  const streakTxt = streak >= 2
+    ? `🔥 ${streak}-day streak`
+    : streak === 1 ? '🔥 1-day streak' : 'No streak yet — log today!';
+
+  let cells = '';
+  for(let i=0; i<totalCells; i++) {
+    let cellDate, isCurrentMonth = true, isFuture = false;
+    if(i < startDow) {
+      cellDate = new Date(calYear, calMonth-1, daysInPrev - startDow + 1 + i);
+      isCurrentMonth = false;
+    } else if(i - startDow >= daysInMonth) {
+      cellDate = new Date(calYear, calMonth+1, i - startDow - daysInMonth + 1);
+      isCurrentMonth = false;
+    } else {
+      cellDate = new Date(calYear, calMonth, i - startDow + 1);
+    }
+
+    const str = ds(cellDate);
+    const isToday = str === todayStr;
+    const entry = data[str];
+    const nowMidnight = new Date(); nowMidnight.setHours(0,0,0,0);
+    isFuture = cellDate > nowMidnight && !isToday;
+
+    let classes = 'cal-cell';
+    if(!isCurrentMonth) classes += ' c-other-month';
+    if(isToday) classes += ' c-today';
+    if(isFuture) classes += ' c-future';
+
+    let circleHtml;
+    if(entry) {
+      const ring = isToday ? ' c-today-ring' : '';
+      circleHtml = `<div class="c-circle-wrap${ring}" onclick="openEdit('${str}')">${svg(entry.mood??1, 38)}</div>`;
+    } else if(!isFuture) {
+      const ring = isToday ? ' style="border:2.5px solid var(--g)"' : '';
+      circleHtml = `<div class="c-circle-wrap" onclick="${isCurrentMonth?`calTapEmpty('${str}')`:''}">
+        <div class="c-empty-circle"${ring}>
+          <span class="c-plus">+</span>
+        </div>
+      </div>`;
+    } else {
+      circleHtml = `<div class="c-circle-wrap"><div class="c-empty-circle" style="background:#f5f5f5"></div></div>`;
+    }
+
+    cells += `<div class="${classes}">
+      ${circleHtml}
+      <div class="c-num">${cellDate.getDate()}</div>
+    </div>`;
+  }
+
+  document.getElementById('mainContent').innerHTML = `
+    <div class="cal-view">
+      <div class="cal-nav">
+        <button class="cal-arrow" onclick="calPrev()">‹</button>
+        <span class="cal-month-label">${monthLabel}</span>
+        <button class="cal-arrow" onclick="calNext()">›</button>
+      </div>
+      <div class="cal-streak-row">
+        <span class="cal-streak-txt">${streakTxt}</span>
+      </div>
+      <div class="cal-body">
+        <div class="cal-dow">
+          ${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d=>`<div class="cal-dow-cell">${d}</div>`).join('')}
+        </div>
+        <div class="cal-cells">${cells}</div>
+      </div>
+    </div>`;
+}
+
+function calPrev() {
+  calMonth--;
+  if(calMonth<0) { calMonth=11; calYear--; }
+  renderCal();
+}
+function calNext() {
+  const now = new Date();
+  if(calYear > now.getFullYear() || (calYear===now.getFullYear() && calMonth>=now.getMonth())) return;
+  calMonth++;
+  if(calMonth>11) { calMonth=0; calYear++; }
+  renderCal();
+}
+
+function calTapEmpty(str) {
+  // Switch to list view and set the date for entry
+  switchView('list');
+  pickDate(str);
+  window.scrollTo({top:0, behavior:'smooth'});
+  toast('Select date set — log your entry above');
+}
+
+// ── WEEKLY VIEW ──
+function renderWeekly() {
+  const data = load();
+  const dates = Object.keys(data).sort();
+  if(!dates.length) {
+    document.getElementById('mainContent').innerHTML =
+      `<div class="weekly-view"><div class="empty"><div class="empty-icon">📊</div>
+       <div class="empty-txt">No entries yet.<br>Log some days to see weekly averages!</div></div></div>`;
+    return;
+  }
+
+  const weeks = new Map();
+  dates.forEach(str => {
+    const key = ds(weekSun(pd(str)));
+    if(!weeks.has(key)) weeks.set(key, []);
+    weeks.get(key).push(str);
+  });
+
+  const wkKeys = Array.from(weeks.keys()).sort().reverse();
+  const avgs = wkKeys.map(wk => {
+    const entries = weeks.get(wk);
+    const total = entries.reduce((s,d)=>s+(data[d]?.calories||0),0);
+    return entries.length ? Math.round(total/entries.length) : 0;
+  });
+  const maxAvg = Math.max(...avgs, 1);
+
+  const now = new Date(); now.setHours(0,0,0,0);
+  const curWk = ds(weekSun(now));
+  const lwDate = new Date(now); lwDate.setDate(now.getDate()-7);
+  const lastWk = ds(weekSun(lwDate));
+
+  // Bar colors: gradient green to muted based on avg (lower=better or just consistent)
+  const barColors = ['#2d4a3a','#3a6650','#4a8a6a','#5aaa84','#7ac4a0'];
+
+  let cards = '';
+  wkKeys.forEach((wk, idx) => {
+    const entries = weeks.get(wk);
+    const avg = avgs[idx];
+    const pct = Math.round((avg/maxAvg)*100);
+    const color = barColors[Math.min(idx, barColors.length-1)];
+
+    let lbl;
+    if(wk===curWk) lbl='This Week';
+    else if(wk===lastWk) lbl='Last Week';
+    else {
+      const wkEnd = new Date(pd(wk)); wkEnd.setDate(wkEnd.getDate()+6);
+      lbl = pd(wk).toLocaleDateString('en-US',{month:'short',day:'numeric'})
+        +' – '+wkEnd.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+    }
+
+    const moodDots = entries
+      .filter(d=>data[d]?.mood!=null)
+      .map(d=>`<span>${svg(data[d].mood,16)}</span>`)
+      .join('');
+
+    cards += `<div class="wk-avg-card">
+      <div class="wk-avg-top">
+        <span class="wk-avg-range">${lbl}</span>
+        <div>
+          <span class="wk-avg-num">${fmt(avg)}</span>
+          <span class="wk-avg-unit">cal/day</span>
+        </div>
+      </div>
+      <div class="wk-bar-bg">
+        <div class="wk-bar-fill" style="width:${pct}%;background:${color}"></div>
+      </div>
+      <div class="wk-avg-meta">
+        <span class="wk-avg-days">${entries.length} day${entries.length!==1?'s':''} logged</span>
+        <div class="wk-avg-moods">${moodDots}</div>
+      </div>
+    </div>`;
+  });
+
+  document.getElementById('mainContent').innerHTML = `
+    <div class="weekly-view">
+      <div class="wk-avg-header">
+        <span class="wk-avg-header-label">Weekly Averages</span>
+        <span class="wk-avg-header-sub">${wkKeys.length} week${wkKeys.length!==1?'s':''}</span>
+      </div>
+      ${cards}
+    </div>`;
 }
 
 // ── BACKUP & RESTORE ──
@@ -703,7 +1039,7 @@ async function syncToGist(data) {
       body: JSON.stringify({ files: { 'calories.json': { content: JSON.stringify(data) } } })
     });
     if (r.ok) localStorage.setItem('_bk_last', new Date().toISOString());
-  } catch (e) { /* silent — don't interrupt the user if sync fails */ }
+  } catch (e) {}
 }
 
 async function restoreFromGist() {
