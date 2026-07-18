@@ -157,6 +157,7 @@ body {
   display:flex; align-items:center; justify-content:space-between;
 }
 .cal-streak-txt { font-size:13px; color:#555; font-weight:600; }
+.cal-avg-txt { font-size:13px; color:#555; font-weight:600; text-align:center; }
 .cal-goal-txt { font-size:13px; color:#555; font-weight:600; text-align:right; }
 .cal-goal-num { color:var(--g); }
 .cal-goal-label { color:#aaa; font-weight:500; }
@@ -838,11 +839,13 @@ function renderCal() {
   const totalDays = isCurrentMonth
     ? now.getDate()
     : new Date(calYear, calMonth + 1, 0).getDate();
-  let goalDays = 0;
+  let goalDays = 0, monthTotal = 0, monthLogged = 0;
   for (let day = 1; day <= totalDays; day++) {
     const e = data[ds(new Date(calYear, calMonth, day))];
+    if (e) { monthTotal += e.calories; monthLogged++; }
     if (e && e.calories <= 2000) goalDays++;
   }
+  const monthAvg = monthLogged ? Math.round(monthTotal / monthLogged) : null;
 
   let cells = '';
   for(let i=0; i<totalCells; i++) {
@@ -898,6 +901,7 @@ function renderCal() {
       </div>
       <div class="cal-streak-row">
         <span class="cal-streak-txt">${streakTxt}</span>
+        <span class="cal-avg-txt">${monthAvg !== null ? `<span class="cal-goal-num">${fmt(monthAvg)}</span><span class="cal-goal-label"> avg/day</span>` : '<span class="cal-goal-label">no entries</span>'}</span>
         <span class="cal-goal-txt">
           <span class="cal-goal-num">${goalDays}/${totalDays}</span>
           <span class="cal-goal-label"> ≤ 2k cal</span>
