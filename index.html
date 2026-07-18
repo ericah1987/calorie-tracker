@@ -538,15 +538,20 @@ function weekSun(date) {
 }
 
 // ── STREAK ──
+// Only moods 0/1/2 (great/good/okay) keep the streak alive. Orange or red break it.
+function isGoodMood(entry) {
+  return entry && entry.mood != null && entry.mood <= 2;
+}
+
 function calcStreak() {
   const data = load();
   const todayStr = today();
   let streak = 0;
   const start = new Date(); start.setHours(0,0,0,0);
-  if (!data[todayStr]) start.setDate(start.getDate()-1);
+  if (!isGoodMood(data[todayStr])) start.setDate(start.getDate()-1);
   const d = new Date(start);
   while(true) {
-    if(data[ds(d)]) { streak++; d.setDate(d.getDate()-1); }
+    if(isGoodMood(data[ds(d)])) { streak++; d.setDate(d.getDate()-1); }
     else break;
   }
   return streak;
