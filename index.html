@@ -154,9 +154,12 @@ body {
 .cal-arrow:active { background:#e2e2e2; }
 .cal-streak-row {
   background:#fff; padding:10px 20px; border-bottom:1px solid #f0f0f0;
-  display:flex; align-items:center; gap:6px;
+  display:flex; align-items:center; justify-content:space-between;
 }
 .cal-streak-txt { font-size:13px; color:#555; font-weight:600; }
+.cal-goal-txt { font-size:13px; color:#555; font-weight:600; text-align:right; }
+.cal-goal-num { color:var(--g); }
+.cal-goal-label { color:#aaa; font-weight:500; }
 .cal-body { padding:12px 10px 0; }
 .cal-dow {
   display:grid; grid-template-columns:repeat(7,1fr);
@@ -830,6 +833,17 @@ function renderCal() {
     ? `🔥 ${streak}-day streak`
     : streak === 1 ? '🔥 1-day streak' : 'No streak yet — log today!';
 
+  // Goal counter: days ≤ 2,000 cal this month
+  const isCurrentMonth = (calYear === now.getFullYear() && calMonth === now.getMonth());
+  const totalDays = isCurrentMonth
+    ? now.getDate()
+    : new Date(calYear, calMonth + 1, 0).getDate();
+  let goalDays = 0;
+  for (let day = 1; day <= totalDays; day++) {
+    const e = data[ds(new Date(calYear, calMonth, day))];
+    if (e && e.calories <= 2000) goalDays++;
+  }
+
   let cells = '';
   for(let i=0; i<totalCells; i++) {
     let cellDate, isCurrentMonth = true, isFuture = false;
@@ -884,6 +898,10 @@ function renderCal() {
       </div>
       <div class="cal-streak-row">
         <span class="cal-streak-txt">${streakTxt}</span>
+        <span class="cal-goal-txt">
+          <span class="cal-goal-num">${goalDays}/${totalDays}</span>
+          <span class="cal-goal-label"> ≤ 2k cal</span>
+        </span>
       </div>
       <div class="cal-body">
         <div class="cal-dow">
